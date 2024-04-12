@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "This project is a comprehensive source port of our [Client refactor](https://github.com/2004scape/Client) to TypeScript.",
   "dependencies": {
+    "@capacitor/android": "^5.7.4",
+    "@capacitor/core": "^5.7.4",
     "foundation-sites": "^6.8.1",
     "jquery": "^3.7.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^5.7.4",
     "@types/foundation-sites": "^6.4.3",
     "@types/jest": "^29.5.12",
     "@types/jquery": "^3.5.29",
