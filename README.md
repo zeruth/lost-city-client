@@ -10,7 +10,7 @@ This fork utilizes Capacitor for native platform feature support on Android. (an
 Android built on Windows using WebStorm and Android Studio.  
   
   
-Build the webpack like normal and copy `public` to `android\app\src\main\assets\public` as needed. (npx cap synx)  
+Build the webpack like normal and copy `public` to `android\app\src\main\assets\public` as needed. (npx cap sync)  
 Then open/build `android` in android studio as normal!  
   
 Releases in f2p(w1) and p2p(w3) flavors.  
