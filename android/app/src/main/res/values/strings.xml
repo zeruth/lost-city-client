@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">2004scape-client</string>
-    <string name="title_activity_main">2004scape-client</string>
+    <string name="app_name">Client2</string>
+    <string name="title_activity_main">Client2</string>
     <string name="package_name">lost.city.client</string>
     <string name="custom_url_scheme">lost.city.client</string>
 </resources>
