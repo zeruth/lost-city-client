@@ -13,7 +13,7 @@ Android built on Windows using WebStorm and Android Studio.
 Build the webpack like normal and copy `public` to `android\app\src\main\assets\public` as needed. (npx cap sync)  
 Then open/build `android` in android studio as normal!  
   
-Releases in f2p(w1) and p2p(w3) flavors.  
+Releases in f2p(w1) and p2p(w3) Android flavors at https://github.com/zeruth/lost-city-client/releases.  
   
 ## Site Index
 
