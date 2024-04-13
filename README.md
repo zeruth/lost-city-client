@@ -2,8 +2,19 @@
 
 This project is a comprehensive source port of our [Client refactor](https://github.com/2004scape/Client) from Java to TypeScript.
 
-Click [here](https://github.com/2004scape/Client2/tree/gh-pages) to view the current deployment summary. 🚀
-
+Click [here](https://github.com/2004scape/Client2/tree/gh-pages) to view the current deployment summary. 🚀  
+  
+# Capacitor  
+  
+This fork utilizes Capacitor for native platform feature support on Android. (and IOS if anyone is interested in supporting that)  
+Android built on Windows using WebStorm and Android Studio.  
+  
+  
+Build the webpack like normal and copy `public` to `android\app\src\main\assets\public` as needed. (npx cap synx)  
+Then open/build `android` in android studio as normal!  
+  
+Releases in f2p(w1) and p2p(w3) flavors.  
+  
 ## Site Index
 
 ### Client
