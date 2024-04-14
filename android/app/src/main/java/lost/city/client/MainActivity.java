@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.PluginHandle;
 
 public class MainActivity extends BridgeActivity {
 
@@ -18,6 +19,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getBridge().registerPlugin(LongPressPlugin.class);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         webview = findViewById(com.getcapacitor.android.R.id.webview); // Replace with the ID of your root layout
@@ -39,6 +41,11 @@ public class MainActivity extends BridgeActivity {
                 params.bottomMargin = 0;
                 webview.setLayoutParams(params);
             }
+        });
+        webview.setOnLongClickListener(v -> {
+            PluginHandle plugin = getBridge().getPlugin("LongPress");
+                    ((LongPressPlugin)plugin.getInstance()).handleLongPress(v);
+            return true;
         });
     }
 
