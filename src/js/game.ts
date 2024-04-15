@@ -62,6 +62,7 @@ import SeqBase from './jagex2/graphics/SeqBase';
 import SeqFrame from './jagex2/graphics/SeqFrame';
 import FloType from './jagex2/config/FloType';
 import {setupConfiguration} from './configuration';
+import Tile from './jagex2/dash3d/type/Tile';
 
 // noinspection JSSuspiciousNameCombination
 class Game extends Client {
@@ -1814,8 +1815,8 @@ class Game extends Client {
 
                     if (this.projectX > -1) {
                         for (let icon: number = 0; icon < 8; icon++) {
-                            if ((player.headicons & (0x1 << icon)) !== 0 && this.imageHeadicons[icon]) {
-                                this.imageHeadicons[icon]!.draw(this.projectX - 12, this.projectY - y);
+                            if ((player.headicons & (0x1 << icon)) !== 0) {
+                                this.imageHeadicons[icon]?.draw(this.projectX - 12, this.projectY - y);
                                 y -= 25;
                             }
                         }
@@ -1825,15 +1826,15 @@ class Game extends Client {
                 if (index >= 0 && this.hintType === 10 && this.hintPlayer === this.playerIds[index]) {
                     this.projectFromEntity(entity, entity.height + 15);
 
-                    if (this.projectX > -1 && this.imageHeadicons[7]) {
-                        this.imageHeadicons[7].draw(this.projectX - 12, this.projectY - y);
+                    if (this.projectX > -1) {
+                        this.imageHeadicons[7]?.draw(this.projectX - 12, this.projectY - y);
                     }
                 }
             } else if (this.hintType === 1 && this.hintNpc === this.npcIds[index - this.playerCount] && this.loopCycle % 20 < 10) {
                 this.projectFromEntity(entity, entity.height + 15);
 
-                if (this.projectX > -1 && this.imageHeadicons[2]) {
-                    this.imageHeadicons[2].draw(this.projectX - 12, this.projectY - 28);
+                if (this.projectX > -1) {
+                    this.imageHeadicons[2]?.draw(this.projectX - 12, this.projectY - 28);
                 }
             }
 
@@ -1878,11 +1879,144 @@ class Game extends Client {
             if (entity.combatCycle > this.loopCycle + 330) {
                 this.projectFromEntity(entity, (entity.height / 2) | 0);
 
-                if (this.projectX > -1 && this.imageHitmarks[entity.damageType]) {
-                    this.imageHitmarks[entity.damageType]!.draw(this.projectX - 12, this.projectY - 12);
+                if (this.projectX > -1) {
+                    this.imageHitmarks[entity.damageType]?.draw(this.projectX - 12, this.projectY - 12);
                     this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + 4, entity.damage.toString(), Colors.BLACK);
                     this.fontPlain11?.drawStringCenter(this.projectX - 1, this.projectY + 3, entity.damage.toString(), Colors.WHITE);
                 }
+            }
+
+            if (Client.showDebug) {
+                // true tile overlay
+                if (entity.pathLength > 0 || entity.forceMoveEndCycle >= this.loopCycle || entity.forceMoveStartCycle > this.loopCycle) {
+                    const halfUnit: number = 64 * entity.size;
+                    this.debugDrawTileOverlay(entity.pathTileX[0] * 128 + halfUnit, entity.pathTileZ[0] * 128 + halfUnit, this.currentLevel, entity.size, 0x00ffff, false);
+                }
+
+                // local tile overlay
+                this.debugDrawTileOverlay(entity.x, entity.z, this.currentLevel, entity.size, 0x666666, false);
+
+                let offsetY: number = 0;
+                this.projectFromEntity(entity, entity.height + 30);
+
+                if (index < this.playerCount) {
+                    const player: PlayerEntity = entity as PlayerEntity;
+
+                    this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, player.name, Colors.WHITE);
+                    offsetY -= 15;
+
+                    if (player.lastMask !== -1 && this.loopCycle - player.lastMaskCycle < 30) {
+                        if ((player.lastMask & 0x1) === 0x1) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Appearance Update', Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x2) === 0x2) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Play Seq: ' + player.primarySeqId, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x4) === 0x4) {
+                            let target: number = player.targetId;
+                            if (target > 32767) {
+                                target -= 32768;
+                            }
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Face Entity: ' + target, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x8) === 0x8) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Say', Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x10) === 0x10) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Hit: Type ' + player.damageType + ' Amount ' + player.damage + ' HP ' + player.health + '/' + player.totalHealth, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x20) === 0x20) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Face Coord: ' + player.lastFaceX / 2 + ' ' + player.lastFaceZ / 2, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x40) === 0x40) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Chat', Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x100) === 0x100) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Play Spotanim: ' + player.spotanimId, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((player.lastMask & 0x200) === 0x200) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Exact Move', Colors.WHITE);
+                            offsetY -= 15;
+                        }
+                    }
+                } else {
+                    // npc
+                    const npc: NpcEntity = entity as NpcEntity;
+
+                    let offsetY: number = 0;
+                    this.projectFromEntity(entity, entity.height + 30);
+
+                    this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, npc.type?.name ?? null, Colors.WHITE);
+                    offsetY -= 15;
+
+                    if (npc.lastMask !== -1 && this.loopCycle - npc.lastMaskCycle < 30) {
+                        if ((npc.lastMask & 0x2) === 0x2) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Play Seq: ' + npc.primarySeqId, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((npc.lastMask & 0x4) === 0x4) {
+                            let target: number = npc.targetId;
+                            if (target > 32767) {
+                                target -= 32768;
+                            }
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Face Entity: ' + target, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((npc.lastMask & 0x8) === 0x8) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Say', Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((npc.lastMask & 0x10) === 0x10) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Hit: Type ' + npc.damageType + ' Amount ' + npc.damage + ' HP ' + npc.health + '/' + npc.totalHealth, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((npc.lastMask & 0x20) === 0x20) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Change Type: ' + npc.type?.id ?? null, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((npc.lastMask & 0x40) === 0x40) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Play Spotanim: ' + npc.spotanimId, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+
+                        if ((npc.lastMask & 0x80) === 0x80) {
+                            this.fontPlain11?.drawStringCenter(this.projectX, this.projectY + offsetY, 'Face Coord: ' + npc.lastFaceX / 2 + ' ' + npc.lastFaceZ / 2, Colors.WHITE);
+                            offsetY -= 15;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (Client.showDebug) {
+            for (let i: number = 0; i < this.userTileMarkers.length; i++) {
+                const marker: Tile | null = this.userTileMarkers[i];
+                if (!marker || marker.level !== this.currentLevel || marker.x < 0 || marker.z < 0 || marker.x >= 104 || marker.z >= 104) {
+                    continue;
+                }
+
+                this.debugDrawTileOverlay(marker.x * 128 + 64, marker.z * 128 + 64, marker.level, 1, 0xffff00, false);
             }
         }
 
@@ -1904,21 +2038,21 @@ class Game extends Client {
             this.projectX = this.chatX[i];
             this.projectY = this.chatY[i] = y;
             const message: string | null = this.chats[i];
-            if (this.chatEffects == 0) {
+            if (this.chatEffects === 0) {
                 let color: number = Colors.YELLOW;
                 if (this.chatColors[i] < 6) {
                     color = Colors.CHAT_COLORS[this.chatColors[i]];
                 }
-                if (this.chatColors[i] == 6) {
+                if (this.chatColors[i] === 6) {
                     color = this.sceneCycle % 20 < 10 ? Colors.RED : Colors.YELLOW;
                 }
-                if (this.chatColors[i] == 7) {
+                if (this.chatColors[i] === 7) {
                     color = this.sceneCycle % 20 < 10 ? Colors.BLUE : Colors.CYAN;
                 }
-                if (this.chatColors[i] == 8) {
+                if (this.chatColors[i] === 8) {
                     color = this.sceneCycle % 20 < 10 ? 0xb000 : 0x80ff80;
                 }
-                if (this.chatColors[i] == 9) {
+                if (this.chatColors[i] === 9) {
                     const delta: number = 150 - this.chatTimers[i];
                     if (delta < 50) {
                         color = delta * 1280 + Colors.RED;
@@ -1928,7 +2062,7 @@ class Game extends Client {
                         color = (delta - 100) * 5 + Colors.GREEN;
                     }
                 }
-                if (this.chatColors[i] == 10) {
+                if (this.chatColors[i] === 10) {
                     const delta: number = 150 - this.chatTimers[i];
                     if (delta < 50) {
                         color = delta * 5 + Colors.RED;
@@ -1938,7 +2072,7 @@ class Game extends Client {
                         color = (delta - 100) * 327680 + Colors.BLUE - (delta - 100) * 5;
                     }
                 }
-                if (this.chatColors[i] == 11) {
+                if (this.chatColors[i] === 11) {
                     const delta: number = 150 - this.chatTimers[i];
                     if (delta < 50) {
                         color = Colors.WHITE - delta * 327685;
@@ -1948,15 +2082,15 @@ class Game extends Client {
                         color = Colors.WHITE - (delta - 100) * 327680;
                     }
                 }
-                if (this.chatStyles[i] == 0) {
+                if (this.chatStyles[i] === 0) {
                     this.fontBold12?.drawStringCenter(this.projectX, this.projectY + 1, message, Colors.BLACK);
                     this.fontBold12?.drawStringCenter(this.projectX, this.projectY, message, color);
                 }
-                if (this.chatStyles[i] == 1) {
+                if (this.chatStyles[i] === 1) {
                     this.fontBold12?.drawCenteredWave(this.projectX, this.projectY + 1, message, Colors.BLACK, this.sceneCycle);
                     this.fontBold12?.drawCenteredWave(this.projectX, this.projectY, message, color, this.sceneCycle);
                 }
-                if (this.chatStyles[i] == 2) {
+                if (this.chatStyles[i] === 2) {
                     const w: number = this.fontBold12?.stringWidth(message) ?? 0;
                     const offsetX: number = ((150 - this.chatTimers[i]) * (w + 100)) / 150;
                     Draw2D.setBounds(334, this.projectX + 50, 0, this.projectX - 50);
@@ -1984,8 +2118,9 @@ class Game extends Client {
     };
 
     private drawDebug = (): void => {
+        // all of this is basically custom code
         const x: number = 507;
-        let y: number = 20;
+        let y: number = 13;
         this.fontPlain11?.drawStringRight(x, y, `FPS: ${this.fps}`, Colors.YELLOW, true);
         y += 13;
         this.fontPlain11?.drawStringRight(x, y, `Speed: ${this.ms.toFixed(4)} ms`, Colors.YELLOW, true);
@@ -1994,8 +2129,47 @@ class Game extends Client {
         y += 13;
         this.fontPlain11?.drawStringRight(x, y, `Slowest: ${this.slowestMS.toFixed(4)} ms`, Colors.YELLOW, true);
         y += 13;
-        this.fontPlain11?.drawStringRight(x, y, `Occluders: ${World3D.activeOccluderCount}`, Colors.YELLOW, true);
+        this.fontPlain11?.drawStringRight(x, y, `Occluders: ${World3D.levelOccluderCount[World3D.topLevel]} Active: ${World3D.activeOccluderCount}`, Colors.YELLOW, true);
         // this.fontPlain11?.drawRight(x, y, `Rate: ${this.deltime} ms`, Colors.YELLOW, true);
+        y += 13;
+        if (this.lastTickFlag) {
+            this.fontPlain11?.drawStringRight(x, y, 'tock', Colors.YELLOW, true);
+        } else {
+            this.fontBold12?.drawStringRight(x, y, 'tick', Colors.YELLOW, true);
+        }
+    };
+
+    private debugDrawTileOverlay = (x: number, z: number, level: number, size: number, color: number, crossed: boolean): void => {
+        const height: number = this.getHeightmapY(level, x, z);
+
+        // x/z should be the center of a tile which is 128 client-units large, so +/- 64 puts us at the edges
+        const halfUnit: number = 64 * size;
+        this.project(x - halfUnit, height, z - halfUnit);
+        const x0: number = this.projectX;
+        const y0: number = this.projectY;
+        this.project(x + halfUnit, height, z - halfUnit);
+        const x1: number = this.projectX;
+        const y1: number = this.projectY;
+        this.project(x - halfUnit, height, z + halfUnit);
+        const x2: number = this.projectX;
+        const y2: number = this.projectY;
+        this.project(x + halfUnit, height, z + halfUnit);
+        const x3: number = this.projectX;
+        const y3: number = this.projectY;
+
+        // one of our points failed to project
+        if (x0 === -1 || x1 === -1 || x2 === -1 || x3 === -1) {
+            return;
+        }
+
+        if (crossed) {
+            Draw2D.drawLine(x0, y0, x3, y3, (color & 0xfefefe) >> 1);
+            Draw2D.drawLine(x1, y1, x2, y2, (color & 0xfefefe) >> 1);
+        }
+        Draw2D.drawLine(x0, y0, x1, y1, color);
+        Draw2D.drawLine(x0, y0, x2, y2, color);
+        Draw2D.drawLine(x1, y1, x3, y3, color);
+        Draw2D.drawLine(x2, y2, x3, y3, color);
     };
 
     private draw3DEntityElements = (): void => {
@@ -4403,7 +4577,9 @@ class Game extends Client {
                 tileLevel = level + 1;
             }
 
-            World.addLoc(level, x, z, this.scene, this.levelHeightmap!, this.locList, this.levelCollisionMap[level]!, id, shape, angle, tileLevel); // wrapped in a try catch
+            if (this.levelHeightmap) {
+                World.addLoc(level, x, z, this.scene, this.levelHeightmap, this.locList, this.levelCollisionMap[level], id, shape, angle, tileLevel);
+            }
         }
     };
 
@@ -5607,6 +5783,7 @@ class Game extends Client {
                 return true;
             }
             if (this.packetType === ServerProt.PLAYER_INFO) {
+                this.lastTickFlag = !this.lastTickFlag; // custom
                 // PLAYER_INFO
                 this.readPlayerInfo(this.in, this.packetSize);
                 if (this.sceneState === 1) {
@@ -5777,6 +5954,9 @@ class Game extends Client {
             this.messageType[i] = this.messageType[i - 1];
             this.messageSender[i] = this.messageSender[i - 1];
             this.messageText[i] = this.messageText[i - 1];
+        }
+        if (Client.showDebug && type === 0) {
+            text = '[' + ((this.loopCycle / 30) | 0) + ']: ' + text;
         }
         this.messageType[0] = type;
         this.messageSender[0] = sender;
@@ -5957,19 +6137,19 @@ class Game extends Client {
     };
 
     private handlePrivateChatInput = (mouseY: number): void => {
-        if (this.splitPrivateChat == 0) {
+        if (this.splitPrivateChat === 0) {
             return;
         }
 
         let lineOffset: number = 0;
-        if (this.systemUpdateTimer != 0) {
+        if (this.systemUpdateTimer !== 0) {
             lineOffset = 1;
         }
 
         for (let i: number = 0; i < 100; i++) {
-            if (this.messageText[i] != null) {
+            if (this.messageText[i] !== null) {
                 const type: number = this.messageType[i];
-                if ((type == 3 || type == 7) && (type == 7 || this.privateChatSetting == 0 || (this.privateChatSetting == 1 && this.isFriend(this.messageSender[i])))) {
+                if ((type === 3 || type === 7) && (type === 7 || this.privateChatSetting === 0 || (this.privateChatSetting === 1 && this.isFriend(this.messageSender[i])))) {
                     const y: number = 329 - lineOffset * 13;
                     if (this.mouseX > 8 && this.mouseX < 520 && mouseY - 11 > y - 10 && mouseY - 11 <= y + 3) {
                         if (this.rights) {
@@ -5991,7 +6171,7 @@ class Game extends Client {
                     }
                 }
 
-                if ((type == 5 || type == 6) && this.privateChatSetting < 2) {
+                if ((type === 5 || type === 6) && this.privateChatSetting < 2) {
                     lineOffset++;
                     if (lineOffset >= 5) {
                         return;
@@ -6061,7 +6241,7 @@ class Game extends Client {
                             if (child.id !== this.objSelectedInterface || slot !== this.objSelectedSlot) {
                                 this.menuOption[this.menuSize] = 'Use ' + this.objSelectedName + ' with @lre@' + obj.name;
                                 this.menuAction[this.menuSize] = 881;
-                                this.menuParamA[this.menuSize] = obj.index;
+                                this.menuParamA[this.menuSize] = obj.id;
                                 this.menuParamB[this.menuSize] = slot;
                                 this.menuParamC[this.menuSize] = child.id;
                                 this.menuSize++;
@@ -6070,7 +6250,7 @@ class Game extends Client {
                             if ((this.activeSpellFlags & 0x10) === 16) {
                                 this.menuOption[this.menuSize] = this.spellCaption + ' @lre@' + obj.name;
                                 this.menuAction[this.menuSize] = 391;
-                                this.menuParamA[this.menuSize] = obj.index;
+                                this.menuParamA[this.menuSize] = obj.id;
                                 this.menuParamB[this.menuSize] = slot;
                                 this.menuParamC[this.menuSize] = child.id;
                                 this.menuSize++;
@@ -6085,14 +6265,14 @@ class Game extends Client {
                                         } else if (op === 4) {
                                             this.menuAction[this.menuSize] = 347;
                                         }
-                                        this.menuParamA[this.menuSize] = obj.index;
+                                        this.menuParamA[this.menuSize] = obj.id;
                                         this.menuParamB[this.menuSize] = slot;
                                         this.menuParamC[this.menuSize] = child.id;
                                         this.menuSize++;
                                     } else if (op === 4) {
                                         this.menuOption[this.menuSize] = 'Drop @lre@' + obj.name;
                                         this.menuAction[this.menuSize] = 347;
-                                        this.menuParamA[this.menuSize] = obj.index;
+                                        this.menuParamA[this.menuSize] = obj.id;
                                         this.menuParamB[this.menuSize] = slot;
                                         this.menuParamC[this.menuSize] = child.id;
                                         this.menuSize++;
@@ -6103,7 +6283,7 @@ class Game extends Client {
                             if (child.usable) {
                                 this.menuOption[this.menuSize] = 'Use @lre@' + obj.name;
                                 this.menuAction[this.menuSize] = 188;
-                                this.menuParamA[this.menuSize] = obj.index;
+                                this.menuParamA[this.menuSize] = obj.id;
                                 this.menuParamB[this.menuSize] = slot;
                                 this.menuParamC[this.menuSize] = child.id;
                                 this.menuSize++;
@@ -6120,7 +6300,7 @@ class Game extends Client {
                                         } else if (op === 2) {
                                             this.menuAction[this.menuSize] = 422;
                                         }
-                                        this.menuParamA[this.menuSize] = obj.index;
+                                        this.menuParamA[this.menuSize] = obj.id;
                                         this.menuParamB[this.menuSize] = slot;
                                         this.menuParamC[this.menuSize] = child.id;
                                         this.menuSize++;
@@ -6143,7 +6323,7 @@ class Game extends Client {
                                         } else if (op === 4) {
                                             this.menuAction[this.menuSize] = 415;
                                         }
-                                        this.menuParamA[this.menuSize] = obj.index;
+                                        this.menuParamA[this.menuSize] = obj.id;
                                         this.menuParamB[this.menuSize] = slot;
                                         this.menuParamC[this.menuSize] = child.id;
                                         this.menuSize++;
@@ -6152,8 +6332,11 @@ class Game extends Client {
                             }
 
                             this.menuOption[this.menuSize] = 'Examine @lre@' + obj.name;
+                            if (Client.showDebug) {
+                                this.menuOption[this.menuSize] += '@whi@ (' + obj.id + ')';
+                            }
                             this.menuAction[this.menuSize] = 1773;
-                            this.menuParamA[this.menuSize] = obj.index;
+                            this.menuParamA[this.menuSize] = obj.id;
                             if (child.invSlotObjCount) {
                                 this.menuParamC[this.menuSize] = child.invSlotObjCount[slot];
                             }
@@ -6301,6 +6484,9 @@ class Game extends Client {
                     }
 
                     this.menuOption[this.menuSize] = 'Examine @cya@' + loc.name;
+                    if (Client.showDebug) {
+                        this.menuOption[this.menuSize] += '@whi@ (' + loc.id + ')';
+                    }
                     this.menuAction[this.menuSize] = 1175;
                     this.menuParamA[this.menuSize] = bitset;
                     this.menuParamB[this.menuSize] = x;
@@ -6412,6 +6598,9 @@ class Game extends Client {
                         }
 
                         this.menuOption[this.menuSize] = 'Examine @lre@' + type.name;
+                        if (Client.showDebug) {
+                            this.menuOption[this.menuSize] += '@whi@ (' + obj.index + ')';
+                        }
                         this.menuAction[this.menuSize] = 1102;
                         this.menuParamA[this.menuSize] = obj.index;
                         this.menuParamB[this.menuSize] = x;
@@ -6505,6 +6694,9 @@ class Game extends Client {
             }
 
             this.menuOption[this.menuSize] = 'Examine @yel@' + tooltip;
+            if (Client.showDebug) {
+                this.menuOption[this.menuSize] += '@whi@ (' + npc.id + ')';
+            }
             this.menuAction[this.menuSize] = 1607;
             this.menuParamA[this.menuSize] = a;
             this.menuParamB[this.menuSize] = b;
@@ -7028,6 +7220,22 @@ class Game extends Client {
 
             const startX: number = this.bfsStepX[length];
             const startZ: number = this.bfsStepZ[length];
+
+            if (Client.showDebug && this.actionKey[6] === 1 && this.actionKey[7] === 1) {
+                // check if tile is already added, if so remove it
+                for (let i: number = 0; i < this.userTileMarkers.length; i++) {
+                    const marker: Tile | null = this.userTileMarkers[i];
+                    if (marker && marker.x === World3D.clickTileX && marker.z === World3D.clickTileZ) {
+                        this.userTileMarkers[i] = null;
+                        return false;
+                    }
+                }
+
+                // add new
+                this.userTileMarkers[this.userTileMarkerIndex] = new Tile(this.currentLevel, World3D.clickTileX, World3D.clickTileZ);
+                this.userTileMarkerIndex = (this.userTileMarkerIndex + 1) & (this.userTileMarkers.length - 1);
+                return false;
+            }
 
             if (type === 0) {
                 this.out.p1isaac(ClientProt.MOVE_GAMECLICK);
@@ -7968,25 +8176,25 @@ class Game extends Client {
 
         entity.seqTrigger = 0;
 
-        if (entity.forceMoveFaceDirection == 0) {
+        if (entity.forceMoveFaceDirection === 0) {
             entity.dstYaw = 1024;
         }
 
-        if (entity.forceMoveFaceDirection == 1) {
+        if (entity.forceMoveFaceDirection === 1) {
             entity.dstYaw = 1536;
         }
 
-        if (entity.forceMoveFaceDirection == 2) {
+        if (entity.forceMoveFaceDirection === 2) {
             entity.dstYaw = 0;
         }
 
-        if (entity.forceMoveFaceDirection == 3) {
+        if (entity.forceMoveFaceDirection === 3) {
             entity.dstYaw = 512;
         }
     };
 
     private startForceMovement = (entity: PathingEntity): void => {
-        if (entity.forceMoveStartCycle == this.loopCycle || entity.primarySeqId == -1 || entity.primarySeqDelay != 0 || entity.primarySeqCycle + 1 > SeqType.instances[entity.primarySeqId].delay![entity.primarySeqFrame]) {
+        if (entity.forceMoveStartCycle === this.loopCycle || entity.primarySeqId === -1 || entity.primarySeqDelay !== 0 || entity.primarySeqCycle + 1 > SeqType.instances[entity.primarySeqId].delay![entity.primarySeqFrame]) {
             const duration: number = entity.forceMoveStartCycle - entity.forceMoveEndCycle;
             const delta: number = this.loopCycle - entity.forceMoveEndCycle;
             const dx0: number = entity.forceMoveStartSceneTileX * 128 + entity.size * 64;
@@ -7999,19 +8207,19 @@ class Game extends Client {
 
         entity.seqTrigger = 0;
 
-        if (entity.forceMoveFaceDirection == 0) {
+        if (entity.forceMoveFaceDirection === 0) {
             entity.dstYaw = 1024;
         }
 
-        if (entity.forceMoveFaceDirection == 1) {
+        if (entity.forceMoveFaceDirection === 1) {
             entity.dstYaw = 1536;
         }
 
-        if (entity.forceMoveFaceDirection == 2) {
+        if (entity.forceMoveFaceDirection === 2) {
             entity.dstYaw = 0;
         }
 
-        if (entity.forceMoveFaceDirection == 3) {
+        if (entity.forceMoveFaceDirection === 3) {
             entity.dstYaw = 512;
         }
 
