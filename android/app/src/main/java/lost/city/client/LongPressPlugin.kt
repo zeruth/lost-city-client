@@ -1,19 +1,19 @@
-package lost.city.client;
+package lost.city.client
 
-import android.util.Log;
-import android.view.View;
-import android.webkit.WebView;
-
-import com.getcapacitor.Plugin;
-import com.getcapacitor.PluginMethod;
-import com.getcapacitor.annotation.CapacitorPlugin;
+import android.util.Log
+import android.view.View
+import android.webkit.WebView
+import com.getcapacitor.Plugin
+import com.getcapacitor.PluginMethod
+import com.getcapacitor.annotation.CapacitorPlugin
 
 @CapacitorPlugin(name = "LongPress")
-public class LongPressPlugin extends Plugin {
+class LongPressPlugin : Plugin() {
     @PluginMethod
-    public void handleLongPress(View v) {
-        WebView webView = (WebView) v;
-        webView.post(() -> webView.evaluateJavascript(
+    fun handleLongPress(v: View) {
+        val webView = v as WebView
+        webView.post {
+            webView.evaluateJavascript(
                 "(function() {" +
                         "    var canvas = document.getElementById('canvas');" +
                         "    if (canvas) {" +
@@ -25,8 +25,8 @@ public class LongPressPlugin extends Plugin {
                         "    } else {" +
                         "        return 'Failure';" +
                         "    }" +
-                        "})();",
-                value -> Log.d("WebViewEvent", "Android(LongPress) Result: " + value)
-        ));
+                        "})();"
+            ) { value: String -> Log.d("WebViewEvent", "Android(LongPress) Result: $value") }
+        }
     }
 }
