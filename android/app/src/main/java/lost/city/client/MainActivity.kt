@@ -18,8 +18,8 @@ class MainActivity : BridgeActivity() {
         super.onCreate(savedInstanceState)
         registerCapacitorPlugins()
         setupView()
-        webview.getViewTreeObserver().addOnGlobalLayoutListener { adjustViewForKeyboard() }
-        webview.setOnLongClickListener { webView: View -> handleLongPress(webView) }
+        webview.getViewTreeObserver().addOnGlobalLayoutListener(::adjustViewForKeyboard)
+        webview.setOnLongClickListener(::handleLongPress)
     }
 
     private fun setupView() {
