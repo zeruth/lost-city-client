@@ -1,15 +1,12 @@
 package lost.city.client
 
-import android.content.pm.ActivityInfo
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
-import android.view.WindowManager
 import android.webkit.WebView
 import com.getcapacitor.BridgeActivity
 import com.getcapacitor.android.R
-import lost.city.client.Configuration.ALLOW_PORTRAIT
 
 class MainActivity : BridgeActivity() {
     lateinit var webview: WebView
@@ -17,21 +14,9 @@ class MainActivity : BridgeActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         registerCapacitorPlugins()
-        setupView()
+        webview = findViewById(R.id.webview)
         webview.getViewTreeObserver().addOnGlobalLayoutListener(::adjustViewForKeyboard)
         webview.setOnLongClickListener(::handleLongPress)
-    }
-
-    private fun setupView() {
-        webview = findViewById(R.id.webview)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (ALLOW_PORTRAIT)
-            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     }
 
     fun registerCapacitorPlugins() {
